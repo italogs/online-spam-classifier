@@ -1,52 +1,90 @@
-# https://github.com/jeongyoonlee/Kaggler
-# https://kaggler.readthedocs.io/en/latest/
-
-
-#Imports...
-from kaggler.data_io import load_data, save_data
-from kaggler.online_model import SGD
-import numpy as np
-
-
-if __name__ == "__main__":
-    clf = SGD(a=.00005,                # learning rate
-              l1=1e-6,              # L1 regularization parameter
-              l2=1e-6,              # L2 regularization parameter
-              n=57,              # number of hashed features 
-              epoch=1,             # number of epochs
-              interaction=True)     # use feature interaction or not
-
-    # Load database
-    X, y = load_data('spambase/spambase_label-first.csv')
-    # Convert labels to integer (avoid strange behaviors)
-    y = [int(i) for i in y]
-
-
-    t = 0
-    # Data arrival upon time, i.e., len(X) == T
-    for x in X:
-        x = list(x) # Converts each line to a list
-        p = clf.predict_one(x)  # predict for an input
-        print("t: ", t, "p:",p)
-        clf.update_one(x, p - y[t])   # update the model with the target using error
-        t = t + 1
-
-    print(clf)
-    print("End") 
-
-
-
-
-
-
-
-
 # # Algorithms and Uncertainty (2019) - PUC-Rio
 # #
 # # Online Spam Classifier to distinguish spam/not spam emails.
 # #
 # #
 # # Authors: Ítalo G. Santana & Rafael Azevedo M. S. Cruz
+
+# https://github.com/jeongyoonlee/Kaggler
+# https://kaggler.readthedocs.io/en/latest/
+
+# Imports
+from kaggler.data_io import load_data, save_data
+from kaggler.online_model import SGD
+import numpy as np
+from sklearn.utils import shuffle
+from matplotlib import pyplot as plt
+
+if __name__ == "__main__":
+    clf = SGD(a=.00005,                # learning rate
+              l1=1e-6,                 # L1 regularization parameter
+              l2=1e-6,                 # L2 regularization parameter
+              n=57,                    # number of hashed features
+              epoch=1,                 # number of epochs
+              interaction=True)        # use feature interaction or not
+
+    # Load database
+    X, y = load_data('spambase/spambase_label-first.csv')
+
+    X, y = shuffle(X, y)
+
+    # Convert labels to integer (avoid strange behaviors)
+    y = [int(i) for i in y]
+
+    t = 0
+    loss_diff = 0
+    true_y = 0
+    accuracy = []
+    loss = []
+    # Data arrival upon time, i.e., len(X) == T
+    for x in X:
+        # Converts each line to a list
+        x = list(x)
+        # predict for an input
+        p = clf.predict_one(x)
+
+        # Compute and save the loss at time instant t.
+        loss_diff = p - y[t]
+        loss.append(loss_diff * loss_diff)
+
+        # Not equal to 0! Replace this with a threshold value.
+        if(loss_diff == 0):
+            true_y = true_y + 1
+        accuracy.append(float(true_y) / (t + 1))
+
+        print("t: ", t, "predicted value: ", p, "expected value: ",  y[t])
+        print("\tloss: ", loss_diff * loss_diff)
+        print("\taccuracy: ", accuracy[t])
+
+        # update the model with the target using error
+        # Is this really updating the loss correctly?
+        clf.update_one(x, loss_diff)
+        t = t + 1
+
+    # Plotting classfifier over iterations
+    #loss_t = np.array(loss)
+    #x = np.array(X)
+
+    #plt.suptitle('Loss through time')
+    #plt.plot(x, loss_t, label="Loss")
+    #plt.legend()
+    #plt.xlabel('Time')
+    #plt.ylabel('Loss')
+    #plt.axis([0, t + 1])
+    #plt.show()
+
+    print(clf)
+    print("Final Loss: ", loss[-1])
+    print("End")
+
+
+
+
+
+
+
+
+
 
 # from __future__ import print_function
 # import random
