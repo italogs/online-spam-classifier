@@ -9,26 +9,37 @@
 # https://kaggler.readthedocs.io/en/latest/
 
 # Imports
-from kaggler.data_io import load_data, save_data
-from kaggler.online_model import SGD
+import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
 from sklearn.preprocessing import normalize
 from matplotlib import pyplot as plt
 
-def predictY(theta, X, t):
+def predictY(theta, X, t, threshold=0.5):
     return np.sum(np.dot(theta, X[t]))
 
 def computeGradient(X, y, t, y_p):
-    return 2 * (y_p - y[t]) * X[t]
+    return np.dot((y_p - y[t]), X[t])
+
+def getPredictClass(y_p, threshold=0.5):
+    if(y_p >= threshold):
+        return 1
+    else:
+        return 0
 
 def computeLoss(X, y, t, y_p):
     loss = y_p - y[t]
-    return (loss * loss)
+    return 0.5 * (loss * loss)
+
+def computeAccumulativeLoss(X, y, t, y_p_hist):
+    return np.sum(np.dot(y_p_hist - y[:len(y_p_hist)])) / (t + 1)
+
+def computeTGradient(X, y, t, y_p, gradient_hist):
+    return (np.sum(gradient_hist) / (t + 1))
 
 def updateTheta(theta, gradient, alpha=0.00005):
     new_theta = (theta - (alpha * gradient))
-    #new_theta = new_theta / np.linalg.norm(new_theta)
+    # new_theta = new_theta / np.linalg.norm(new_theta)
     return new_theta
 
 def initTheta(X):
@@ -82,6 +93,7 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
 
         # Predicts the y value for the X[t].
         y_p = predictY(theta, X, t)
+        y_p_hist.append(y_p)
 
         if(y_p < 0.0 or y_p > 1.0):
             print("Invalid prediction!")
@@ -89,19 +101,18 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
 
         # Compute the loss value for the prediction at time t
         loss_t = computeLoss(X, y, t, y_p)
+        loss_hist.append(loss_t)
 
         # Compute the gradient of the play at time t
         gradient_t = computeGradient(X, y, t, y_p)
+        gradient_hist.append(gradient_t)
+        # gradient_t = computeTGradient(X, y, t, y_p, gradient_hist)
 
         # Update theta value for the next time instant prediction (t + 1)
         theta = updateTheta(theta, gradient_t, alpha)
-
-        # Save the parameters found at time instant t.
-        loss_hist.append(loss_t)
-        y_p_hist.append(y_p)
-        gradient_hist.append(gradient_t)
         theta_hist.append(theta)
 
+        # Save the parameters found at time instant t.
         correct_predict = isPredictionCorrect(y_p, y, t)
         if(correct_predict):
             true_y = true_y + 1
@@ -121,7 +132,7 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
     lossT = np.array(loss_hist)
 
     plt.suptitle('Perda versus iterações')
-    plt.plot(range(t+1), lossT, label="Perda")
+    plt.plot(range(len(lossT)), lossT, label="Perda")
     plt.legend()
     plt.xlabel('Iterações')
     plt.ylabel('Perda')
@@ -132,7 +143,7 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
     accuracyT = np.array(accuracy_hist)
 
     plt.suptitle('Acurácia versus iterações')
-    plt.plot(range(t+1), accuracyT, label="Acurácia ")
+    plt.plot(range(len(accuracyT)), accuracyT, label="Acurácia ")
     plt.legend()
     plt.xlabel('Iterações')
     plt.ylabel('Acurácia')
@@ -143,13 +154,15 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
 if __name__ == "__main__":
 
     # Load database
-    X, y = load_data('spambase/spambase_label-first.csv')
+    df = pd.read_csv('spambase/spambase_label-first.csv')
+
+    X = []
+    y = []
+
+    for i, row in df.iterrows():
+        y.append(int(row.values[0]))
+        X.append(row.values[1:])
 
     runOnlineGradientDescent(X, y)
 
     print("End")
-
-
-
-
-
