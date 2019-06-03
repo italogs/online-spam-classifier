@@ -120,22 +120,22 @@ def runOnlineGradientDescent(X, y, alpha = 0.0005, T = 4601):
     # Plotting loss over iterations
     lossT = np.array(loss_hist)
 
-    plt.suptitle('Loss through iterations')
-    plt.plot(range(t+1), lossT, label="Loss")
+    plt.suptitle('Perda versus iterações')
+    plt.plot(range(t+1), lossT, label="Perda")
     plt.legend()
-    plt.xlabel('Iterations')
-    plt.ylabel('Loss')
+    plt.xlabel('Iterações')
+    plt.ylabel('Perda')
     plt.axis([0, t + 1, 0.0, 1.0])
     plt.show()
 
     # Plotting accuracy over iterations
     accuracyT = np.array(accuracy_hist)
 
-    plt.suptitle('Accuracy through iterations')
-    plt.plot(range(t+1), accuracyT, label="Accuracy")
+    plt.suptitle('Acurácia versus iterações')
+    plt.plot(range(t+1), accuracyT, label="Acurácia ")
     plt.legend()
-    plt.xlabel('Iterations')
-    plt.ylabel('Accuracy')
+    plt.xlabel('Iterações')
+    plt.ylabel('Acurácia')
     plt.axis([0, t + 1, 0.0, 1.0])
     plt.show()
 
