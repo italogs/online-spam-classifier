@@ -33,8 +33,8 @@ def updateTheta(theta, gradient, alpha=0.00005):
 
 def initTheta(X):
     if(len(X) > 0):
-        theta = [0.0] * len(X[0])
-        #theta = theta / np.linalg.norm(theta)
+        theta = [1.0] * len(X[0])
+        theta = theta / np.linalg.norm(theta)
         return theta
     return 0
 
